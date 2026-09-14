@@ -8,8 +8,8 @@ state number means. Do not import myenv from this file.
 
 from typing import Any
 
-import numpy as np
 import gymnasium as gym
+import numpy as np
 
 ACCUMULATING = "accumulating"
 REPLACING = "replacing"
@@ -105,7 +105,9 @@ class SarsaLambdaAgent:
         """
         raise NotImplementedError
 
-    def best_run(self, max_steps: int = 300) -> tuple[list[tuple[int, int, float]], bool]:
+    def best_run(
+        self, max_steps: int = 300
+    ) -> tuple[list[tuple[int, int, float]], bool]:
         """Generate one greedy episode under the learned q table, for the report.
 
         Args:
@@ -119,7 +121,9 @@ class SarsaLambdaAgent:
         """
         raise NotImplementedError
 
-    def calc_return(self, episode: list[tuple[Any, Any, float]], discounted: bool = False) -> float:
+    def calc_return(
+        self, episode: list[tuple[Any, Any, float]], discounted: bool = False
+    ) -> float:
         """Return of an episode given as [(s, a, r), ...]."""
         raise NotImplementedError
 
