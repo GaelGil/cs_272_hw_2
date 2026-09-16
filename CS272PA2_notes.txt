@@ -1,0 +1,9 @@
+Action Space: Discrete(n_cols)
+0,1,n…: column[0]...column[n_cols-1]
+Observation Space: self.observation_space = spaces.Discrete(
+low = [0] * (n_cols-1), piece_height	// piece height [1, n_cols - 1 or n_cols - 2],
+high = “” but with column height,
+dtype = …
+)
+self.observation_space = spaces.Discrete(col_height^n_cols * n_cols) has to be within 500
+Reward: possibly -1 per step, +10 per line clear, +10^x for multiline clears
