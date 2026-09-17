@@ -10,7 +10,6 @@ import gymnasium as gym
 import numpy as np
 import pygame
 from gymnasium.envs.registration import register
-from numpy.core.numeric import int32
 
 
 class MyEnv(gym.Env):
@@ -29,8 +28,11 @@ class MyEnv(gym.Env):
             [[-1, -1] for i in range(cols)], dtype=np.int32
         )
 
-        self.observation_space = gym.spaces.Discrete(
-            rows ^ cols * cols
+        self.observation_space = gym.spaces.Dict(
+            {
+                "agent": gym.spaces.Box(0, cols - 1, shape=(2,), dtype=np.int32),
+                "target": gym.spaces.Box(0, cols - 1, shape=(2,), dtype=np.int32),
+            }
         )  # TODO: implement this
         # two possible actions, move left or right
         self.action_space = gym.spaces.Discrete(2)
@@ -77,10 +79,10 @@ class MyEnv(gym.Env):
         super().reset(seed=seed)
 
         # set agent state top in middle col at top
-        self._agent_location = np.array([0, self.cols // 2], dtype=np.int32)
+        self._agent_location = np.array([self.cols // 2, 0], dtype=np.int32)
         # target locations are the bottom row
         self._target_locations = np.array(
-            [[-1, i] for i in range(self.cols)], dtype=int32
+            [[i, self.rows - 1] for i in range(self.cols)], dtype=np.int32
         )
         if self.render_mode == "human":
             self._render_frame()
@@ -100,11 +102,11 @@ class MyEnv(gym.Env):
             self._agent_location + direction, 0, self.cols - 1
         )
 
-        terminated = False  # TODO: make so that if
+        terminated = False  # TODO: make so that if we get to top of grid its over
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
-        reward = self._get_reward()
+        reward = self._get_reward()  # TODO: implement this, see notes.txt
         if self.render_mode == "human":
             self._render_frame()
         return observation, reward, terminated, truncated, info
@@ -196,6 +198,12 @@ from gymnasium.utils.env_checker import check_env
 
 # This will catch many common issues
 env = MyEnv(rows=5, cols=6)
+print(env)
+env.reset()
+print(env._get_obs())
+print(env._get_obs()["agent"].shape, env._get_obs()["agent"].dtype)
+print(env._get_obs()["target"].shape, env._get_obs()["target"].dtype)
+print(env.observation_space.contains(env._get_obs))
 try:
     check_env(env)
     print("Environment passes all checks!")
