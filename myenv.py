@@ -29,7 +29,9 @@ class MyEnv(gym.Env):
             [[-1, -1] for i in range(cols)], dtype=np.int32
         )
 
-        self.observation_space = ...  # TODO: implement this
+        self.observation_space = gym.spaces.Discrete(
+            rows ^ cols * cols
+        )  # TODO: implement this
         # two possible actions, move left or right
         self.action_space = gym.spaces.Discrete(2)
 
@@ -80,6 +82,8 @@ class MyEnv(gym.Env):
         self._target_locations = np.array(
             [[-1, i] for i in range(self.cols)], dtype=int32
         )
+        if self.render_mode == "human":
+            self._render_frame()
         return self._get_obs(), self._get_info()
 
     def step(self, action: int):
@@ -101,15 +105,78 @@ class MyEnv(gym.Env):
         observation = self._get_obs()
         info = self._get_info()
         reward = self._get_reward()
-
+        if self.render_mode == "human":
+            self._render_frame()
         return observation, reward, terminated, truncated, info
 
     def render(self):
         """Return a readable picture of the current state, as a string."""
-        if self.render_mode != "ansi":
-            return
-        # TODO: draw it. You need this for the sample episode in your report.
+        if self.render_mode == "rgb_array":
+            return self._render_frame()
         raise NotImplementedError
+
+    def _render_frame(self):
+        if self.window is None and self.render_mode == "human":
+            pygame.init()
+            pygame.display.init()
+            self.window = pygame.display.set_mode((self.window_size, self.window_size))
+        if self.clock is None and self.render_mode == "human":
+            self.clock = pygame.time.Clock()
+
+        canvas = pygame.Surface((self.window_size, self.window_size))
+        canvas.fill((255, 255, 255))
+        pix_square_size = (
+            self.window_size / self.cols
+        )  # The size of a single grid square in pixels
+
+        # First we draw the target
+        # Convert [row, col] to pygame (x, y) by reversing the coordinates
+        pygame.draw.rect(
+            canvas,
+            (255, 0, 0),
+            pygame.Rect(
+                pix_square_size * self._target_locations[::-1],
+                (pix_square_size, pix_square_size),
+            ),
+        )
+        # Now we draw the agent
+        pygame.draw.circle(
+            canvas,
+            (0, 0, 255),
+            (self._agent_location[::-1] + 0.5) * pix_square_size,
+            pix_square_size / 3,
+        )
+
+        # Finally, add some gridlines
+        for x in range(self.cols + 1):
+            pygame.draw.line(
+                canvas,
+                0,
+                (0, pix_square_size * x),
+                (self.window_size, pix_square_size * x),
+                width=3,
+            )
+            pygame.draw.line(
+                canvas,
+                0,
+                (pix_square_size * x, 0),
+                (pix_square_size * x, self.window_size),
+                width=3,
+            )
+
+        if self.render_mode == "human":
+            # The following line copies our drawings from `canvas` to the visible window
+            self.window.blit(canvas, canvas.get_rect())
+            pygame.event.pump()
+            pygame.display.update()
+
+            # We need to ensure that human-rendering occurs at the predefined framerate.
+            # The following line will automatically add a delay to keep the framerate stable.
+            self.clock.tick(self.metadata["render_fps"])
+        else:  # rgb_array
+            return np.transpose(
+                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
+            )
 
     def close(self):
         if self.window is not None:
@@ -125,3 +192,12 @@ register(
     entry_point="myenv:MyEnv",
     max_episode_steps=300,
 )
+from gymnasium.utils.env_checker import check_env
+
+# This will catch many common issues
+env = MyEnv(rows=5, cols=6)
+try:
+    check_env(env)
+    print("Environment passes all checks!")
+except Exception as e:
+    print(f"Environment has issues: {e}")
