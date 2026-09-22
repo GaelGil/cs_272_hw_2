@@ -47,6 +47,7 @@ class MyEnv(gym.Env):
         # pygame stuff (https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/)
         self.window_size = 512  # The size of the PyGame window
         self.window = None
+        self.clock = None
 
     def _get_obs(self):
         """Convert internal state to observation format.
@@ -62,11 +63,7 @@ class MyEnv(gym.Env):
         Returns:
             dict: Info with distance between agent and target
         """
-        return {
-            "distance": np.linalg.norm(
-                self._agent_location - self._target_locations, ord=1
-            )
-        }
+        return 0
 
     def _get_reward(self):
         pass
@@ -89,12 +86,12 @@ class MyEnv(gym.Env):
         # agent died, game over. Leave truncated as False and let the TimeLimit
         # wrapper from register() handle running out of time. The agent treats
         # the two differently, and so should you.
-        direction = self._action_to_direction[action]
+        piece = self.pieces[self.current_piece]
+        used_cols = np.where(np.any(piece, axis=0))[0]
+        piece_width = used_cols[-1] + 1
 
-        # update agent location
-        self._agent_location = np.clip(
-            self._agent_location + direction, 0, self.cols - 1
-        )
+        if action + piece_width > self.cols:
+            return self._get_obs(), -10, True, False, self._get_info()
 
         terminated = False  # TODO: make so that if we get to top of grid its over
         truncated = False
@@ -125,39 +122,30 @@ class MyEnv(gym.Env):
             self.window_size / self.cols
         )  # The size of a single grid square in pixels
 
-        # First we draw the target
-        # Convert [row, col] to pygame (x, y) by reversing the coordinates
-        pygame.draw.rect(
-            canvas,
-            (255, 0, 0),
-            pygame.Rect(
-                pix_square_size * self._target_locations[::-1],
-                (pix_square_size, pix_square_size),
-            ),
-        )
-        # Now we draw the agent
-        pygame.draw.circle(
-            canvas,
-            (0, 0, 255),
-            (self._agent_location[::-1] + 0.5) * pix_square_size,
-            pix_square_size / 3,
-        )
+        # draw fillde cells on board
+        for row in range(self.rows):
+            for col in range(self.cols):
+                pygame.draw.rect(
+                    canvas,
+                    (255, 0, 0),
+                    pygame.Rect(
+                        col * pix_square_size,
+                        row * pix_square_size,
+                        pix_square_size,
+                        pix_square_size,
+                    ),
+                )
 
-        # Finally, add some gridlines
-        for x in range(self.cols + 1):
+        for row in range(self.rows + 1):
+            y = row * pix_square_size
             pygame.draw.line(
-                canvas,
-                0,
-                (0, pix_square_size * x),
-                (self.window_size, pix_square_size * x),
-                width=3,
+                canvas, (0, 0, 0), (0, y), (self.cols * pix_square_size, y), width=2
             )
+
+        for col in range(self.cols + 1):
+            x = row * pix_square_size
             pygame.draw.line(
-                canvas,
-                0,
-                (pix_square_size * x, 0),
-                (pix_square_size * x, self.window_size),
-                width=3,
+                canvas, (0, 0, 0), (x, 0), (x, self.rows * pix_square_size), width=2
             )
 
         if self.render_mode == "human":
@@ -190,16 +178,23 @@ register(
 )
 from gymnasium.utils.env_checker import check_env
 
-# This will catch many common issues
-env = MyEnv(rows=5, cols=6)
-print(env)
-env.reset()
-print(env._get_obs())
-print(env._get_obs()["agent"].shape, env._get_obs()["agent"].dtype)
-print(env._get_obs()["target"].shape, env._get_obs()["target"].dtype)
-print(env.observation_space.contains(env._get_obs))
-try:
-    check_env(env)
-    print("Environment passes all checks!")
-except Exception as e:
-    print(f"Environment has issues: {e}")
+if __name__ == "__main__":
+    # This will catch many common issues
+    env = MyEnv(rows=5, cols=6)
+    print(env)
+    env.reset()
+    obs, info = env.reset(seed=42)
+    print(f"OBSERVATION: {obs}")
+    print(f"INFO: {info}")
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+        env._render_frame()
+    env.close()
+    try:
+        check_env(env)
+        print("Environment passes all checks!")
+    except Exception as e:
+        print(f"Environment has issues: {e}")
