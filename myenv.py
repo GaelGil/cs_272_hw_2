@@ -22,11 +22,14 @@ class MyEnv(gym.Env):
         self.rows = rows
         self.cols = cols
 
-        # init positions. reset will handle the actual positions
-        self._agent_location = np.array([-1, -1], dtype=np.int32)
-        self._target_locations = np.array(
-            [[-1, -1] for i in range(cols)], dtype=np.int32
-        )
+        self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
+        self.current_piece = 0
+
+        self.pieces = [
+            np.array([[1, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int32),  # L
+            np.array([[1, 0, 0], [1, 0, 0], [1, 0, 0]], dtype=np.int32),  # I
+            np.array([[1, 1, 1], [0, 1, 0], [0, 1, 0]], dtype=np.int32),  # T
+        ]
 
         self.observation_space = gym.spaces.Dict(
             {
