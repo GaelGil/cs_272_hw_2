@@ -79,6 +79,21 @@ class MyEnv(gym.Env):
             self._render_frame()
         return self._get_obs(), self._get_info()
 
+    def allowed(self, piece, top_row, left_col):
+        for piece_row in range(3):
+            for piece_col in range(3):
+                if piece[piece_row, piece_col] == 1:
+                    board_row = top_row + piece_row
+                    board_col = left_col + piece_col
+
+                    if board_row >= self.rows or board_col >= self.cols:
+                        return False
+
+                    if self.board[board_row, board_col] == 1:
+                        return False
+
+        return True
+
     def step(self, action: int):
         # TODO: apply the action, with noise drawn from self.np_random.
         #
@@ -125,25 +140,27 @@ class MyEnv(gym.Env):
         # draw fillde cells on board
         for row in range(self.rows):
             for col in range(self.cols):
-                pygame.draw.rect(
-                    canvas,
-                    (255, 0, 0),
-                    pygame.Rect(
-                        col * pix_square_size,
-                        row * pix_square_size,
-                        pix_square_size,
-                        pix_square_size,
-                    ),
-                )
+                if self.board[row, col] == 1:
+                    pygame.draw.rect(
+                        canvas,
+                        (0, 120, 255),
+                        pygame.Rect(
+                            col * pix_square_size,
+                            row * pix_square_size,
+                            pix_square_size,
+                            pix_square_size,
+                        ),
+                    )
 
+        # draw a rows on a grid
         for row in range(self.rows + 1):
             y = row * pix_square_size
             pygame.draw.line(
                 canvas, (0, 0, 0), (0, y), (self.cols * pix_square_size, y), width=2
             )
-
+        # draw cols on a grid
         for col in range(self.cols + 1):
-            x = row * pix_square_size
+            x = col * pix_square_size
             pygame.draw.line(
                 canvas, (0, 0, 0), (x, 0), (x, self.rows * pix_square_size), width=2
             )
@@ -180,7 +197,7 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    env = MyEnv(rows=5, cols=6)
+    env = MyEnv(rows=5, cols=6, render_mode="human")
     print(env)
     env.reset()
     obs, info = env.reset(seed=42)
