@@ -25,25 +25,20 @@ class MyEnv(gym.Env):
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
         self.current_piece = 0
 
+        # possible pieces for our agent to see
         self.pieces = [
             np.array([[1, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int32),  # L
-            np.array([[1, 0, 0], [1, 0, 0], [1, 0, 0]], dtype=np.int32),  # I
+            np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]], dtype=np.int32),  # I
             np.array([[1, 1, 1], [0, 1, 0], [0, 1, 0]], dtype=np.int32),  # T
         ]
 
         self.observation_space = gym.spaces.Dict(
             {
-                "agent": gym.spaces.Box(0, cols - 1, shape=(2,), dtype=np.int32),
-                "target": gym.spaces.Box(0, cols - 1, shape=(2,), dtype=np.int32),
+                "board": gym.spaces.MultiBinary((self.rows, self.cols)),
+                "piece": gym.spaces.Discrete(3),
             }
-        )  # TODO: implement this
-        # two possible actions, move left or right
-        self.action_space = gym.spaces.Discrete(2)
-
-        self._action_to_direction = {
-            0: np.array([0, 1]),  # Move right (column + 1)
-            2: np.array([0, -1]),  # Move left (column - 1)
-        }
+        )
+        self.action_space = gym.spaces.Discrete(self.cols)
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -59,7 +54,7 @@ class MyEnv(gym.Env):
         Returns:
             dict: Observation with agent and target positions
         """
-        return {"agent": self._agent_location, "target": self._target_locations}
+        return {"piece": self.current_piece, "board": self.board.copy()}
 
     def _get_info(self):
         """Compute auxiliary information for debugging.
@@ -81,12 +76,8 @@ class MyEnv(gym.Env):
         # the reproducibility test fails.
         super().reset(seed=seed)
 
-        # set agent state top in middle col at top
-        self._agent_location = np.array([self.cols // 2, 0], dtype=np.int32)
-        # target locations are the bottom row
-        self._target_locations = np.array(
-            [[i, self.rows - 1] for i in range(self.cols)], dtype=np.int32
-        )
+        self.board.fill(0)
+        self.current_piece = int(self.np_random.integers(3))
         if self.render_mode == "human":
             self._render_frame()
         return self._get_obs(), self._get_info()
