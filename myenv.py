@@ -18,11 +18,13 @@ class MyEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
     def __init__(self, rows: int, cols: int, render_mode: str | None = None):
-        # TODO: describe your world here -- the map, the pieces, the constants.
+        # num of rows and cols
         self.rows = rows
         self.cols = cols
 
+        # our board
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
+        # current piece the agent sees
         self.current_piece = 0
 
         # possible pieces for our agent to see
@@ -38,6 +40,7 @@ class MyEnv(gym.Env):
                 "piece": gym.spaces.Discrete(3),
             }
         )
+        # which column we choose the agent to drop the piece in
         self.action_space = gym.spaces.Discrete(self.cols)
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
@@ -73,6 +76,7 @@ class MyEnv(gym.Env):
         # the reproducibility test fails.
         super().reset(seed=seed)
 
+        # set the board to empty and set the piece to random piece
         self.board.fill(0)
         self.current_piece = int(self.np_random.integers(3))
         if self.render_mode == "human":
@@ -198,6 +202,11 @@ from gymnasium.utils.env_checker import check_env
 if __name__ == "__main__":
     # This will catch many common issues
     env = MyEnv(rows=5, cols=6, render_mode="human")
+    try:
+        check_env(env)
+        print("Environment passes all checks!")
+    except Exception as e:
+        print(f"Environment has issues: {e}")
     print(env)
     env.reset()
     obs, info = env.reset(seed=42)
@@ -210,8 +219,3 @@ if __name__ == "__main__":
                 running = False
         env._render_frame()
     env.close()
-    try:
-        check_env(env)
-        print("Environment passes all checks!")
-    except Exception as e:
-        print(f"Environment has issues: {e}")
