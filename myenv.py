@@ -74,7 +74,13 @@ class MyEnv(gym.Env):
         return 0
 
     def _get_reward(self):
-        pass
+        """
+        check if rows have been cleared
+        """
+        for row in reversed(self.board):
+            if sum(row) == len(row):
+                return 1
+        return -10
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         # This line seeds self.np_random. Without it, seeding does not work and
@@ -88,38 +94,25 @@ class MyEnv(gym.Env):
             self._render_frame()
         return self._get_obs(), self._get_info()
 
-    def allowed(self, piece, top_row, left_col):
-        for piece_row in range(self.piece_width):
-            for piece_col in range(self.piece_width):
-                if piece[piece_row, piece_col] == 1:
-                    board_row = top_row + piece_row
-                    board_col = left_col + piece_col
-
-                    if board_row >= self.rows or board_col >= self.cols:
-                        return False
-
-                    if self.board[board_row, board_col] == 1:
-                        return False
-
-        return True
-
     def place(self, piece, col: int):
+        """
+        Place the piece on the board
+        """
         base = piece[-1]
-        for row in self.board:
-
-
-    def terminated(self):
-
-        pass
-
-    def reward(self):
-        """
-        check if things have been cleared
-        """
         for row in reversed(self.board):
             if sum(row) == len(row):
                 return 1
-        return -10
+        return 0
+
+    def terminated(self, piece, col: int):
+        """
+        Check if the game is over
+        """
+        base = piece[-1]
+        if self.board[0, col] == 1:
+            return True
+
+        return False
 
     def step(self, action: int):
         # TODO: apply the action, with noise drawn from self.np_random.
@@ -129,17 +122,12 @@ class MyEnv(gym.Env):
         # wrapper from register() handle running out of time. The agent treats
         # the two differently, and so should you.
         piece = self.pieces[self.current_piece]
-        used_cols = np.where(np.any(piece, axis=0))[0]
-        piece_width = used_cols[-1] + 1
+        terminated = self.place(piece=piece, col=action)
+        reward = self._get_reward()
 
-        if action + piece_width > self.cols:
-            return self._get_obs(), -10, True, False, self._get_info()
-
-        terminated = False  # TODO: make so that if we get to top of grid its over
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
-        reward = self._get_reward()  # TODO: implement this, see notes.txt
         if self.render_mode == "human":
             self._render_frame()
         return observation, reward, terminated, truncated, info
