@@ -17,10 +17,13 @@ class MyEnv(gym.Env):
 
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, rows: int, cols: int, render_mode: str | None = None):
+    def __init__(
+        self, rows: int, cols: int, piece_width: int, render_mode: str | None = None
+    ):
         # num of rows and cols
         self.rows = rows
         self.cols = cols
+        self.piece_width = piece_width
 
         # our board
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
@@ -41,7 +44,9 @@ class MyEnv(gym.Env):
             }
         )
         # which column we choose the agent to drop the piece in
-        self.action_space = gym.spaces.Discrete(self.cols)
+        # all availabel colums expcept the ones that would cause out of bounds on the right side
+        # we will assume that the far left piece is the col we choose.
+        self.action_space = gym.spaces.Discrete(self.cols - self.piece_width)
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -84,8 +89,8 @@ class MyEnv(gym.Env):
         return self._get_obs(), self._get_info()
 
     def allowed(self, piece, top_row, left_col):
-        for piece_row in range(3):
-            for piece_col in range(3):
+        for piece_row in range(self.piece_width):
+            for piece_col in range(self.piece_width):
                 if piece[piece_row, piece_col] == 1:
                     board_row = top_row + piece_row
                     board_col = left_col + piece_col
@@ -97,6 +102,24 @@ class MyEnv(gym.Env):
                         return False
 
         return True
+
+    def place(self, piece, col: int):
+        base = piece[-1]
+        for row in self.board:
+
+
+    def terminated(self):
+
+        pass
+
+    def reward(self):
+        """
+        check if things have been cleared
+        """
+        for row in reversed(self.board):
+            if sum(row) == len(row):
+                return 1
+        return -10
 
     def step(self, action: int):
         # TODO: apply the action, with noise drawn from self.np_random.
@@ -201,7 +224,7 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    env = MyEnv(rows=5, cols=6, render_mode="human")
+    env = MyEnv(rows=5, cols=6, piece_width=3, render_mode="human")
     try:
         check_env(env)
         print("Environment passes all checks!")
