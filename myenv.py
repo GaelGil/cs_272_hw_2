@@ -160,7 +160,7 @@ class MyEnv(gym.Env):
         if self.render_mode == "human":
             self._render_frame()
         # set a new current piece
-        self.current_piece = int(self.np_random.integers(3))
+        self.current_piece = int(self.np_random.integers(len(self.pieces)))
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
@@ -258,17 +258,19 @@ if __name__ == "__main__":
         print(f"Environment has issues: {e}")
     print(env)
     env.reset()
-    obs, info = env.reset(seed=42)
+    obs, info = env.reset()
     print(f"OBSERVATION: {obs}")
+    print(f"PICE: {env.pieces[env.current_piece]}")
     print(f"INFO: {info}")
     running = True
 
     # random test loop
     for i in range(100):
-        action = int(env.np_random.integers(3))
+        action = int(env.np_random.integers(len(env.pieces)))
         obs, reward, terminated, truncated, info = env.step(action=action)
         print(f"index: {i}")
         print(f"ACTION: {action}")
+        print(f"PICE: {env.pieces[env.current_piece]}")
         print(f"REWARD: {reward}")
         print(f"TERMINATED: {terminated}")
         print(f"TRUNACTED: {truncated}")
