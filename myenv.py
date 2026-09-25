@@ -77,10 +77,11 @@ class MyEnv(gym.Env):
         """
         check if rows have been cleared
         """
+        reward = 0
         for row in reversed(self.board):
             if sum(row) == len(row):
-                return 1
-        return -10
+                reward += 1
+        return reward if reward > 0 else -10
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         # This line seeds self.np_random. Without it, seeding does not work and
@@ -95,6 +96,10 @@ class MyEnv(gym.Env):
         return self._get_obs(), self._get_info()
 
     def can_place(self, piece, top_row, col):
+        """
+        Check if we can place a piece
+
+        """
         for piece_row in range(piece.shape[0]):
             for piece_col in range(piece.shape[1]):
                 if piece[piece_row, piece_col] == 1:
@@ -115,15 +120,16 @@ class MyEnv(gym.Env):
         if not self.can_place(piece, top_row, col):
             return False
 
-    def terminated(self, piece, col: int):
-        """
-        Check if the game is over
-        """
-        base = piece[-1]
-        if self.board[0, col] == 1:
-            return True
+        # check row by row where we can place
+        while self.can_place(piece, top_row + 1, col):
+            top_row += 1
 
-        return False
+        for piece_row in range(piece.shape[0]):
+            for piece_col in range(piece.shape[1]):
+                if piece[piece_row, piece_col] == 1:
+                    self.board[top_row + piece_row, col + piece_col] = 1
+
+        return True
 
     def step(self, action: int):
         # TODO: apply the action, with noise drawn from self.np_random.
@@ -133,12 +139,17 @@ class MyEnv(gym.Env):
         # wrapper from register() handle running out of time. The agent treats
         # the two differently, and so should you.
         piece = self.pieces[self.current_piece]
-        terminated = self.place(piece=piece, col=action)
+        terminated = self.place(piece, action)
         reward = self._get_reward()
 
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
+
+        # if we terminated
+        if not reward:
+            return observation, reward, terminated, truncated, info
+
         if self.render_mode == "human":
             self._render_frame()
         return observation, reward, terminated, truncated, info
