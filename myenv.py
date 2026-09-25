@@ -46,7 +46,7 @@ class MyEnv(gym.Env):
         # which column we choose the agent to drop the piece in
         # all availabel colums expcept the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
-        self.action_space = gym.spaces.Discrete(self.cols - self.piece_width)
+        self.action_space = gym.spaces.Discrete(self.cols - self.piece_width + 1)
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -71,17 +71,24 @@ class MyEnv(gym.Env):
         Returns:
             dict: Info with distance between agent and target
         """
-        return 0
+        return {}
 
     def _get_reward(self):
         """
         check if rows have been cleared
         """
-        reward = 0
-        for row in reversed(self.board):
-            if sum(row) == len(row):
-                reward += 1
-        return reward if reward > 0 else -10
+        cleared = []
+        for i in range(len(self.board)):
+            row = self.board[i]
+            if sum(row) == self.cols:
+                cleared.append(i)
+
+        for i in range(len(cleared)):
+            self.board = np.delete(self.board, cleared[i], axis=0)
+            new_rows = np.zeros((1, self.cols), dtype=np.int32)
+            self.board = np.append(new_rows, self.board, axis=0)
+
+        return len(cleared) if len(cleared) > 0 else -10
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         # This line seeds self.np_random. Without it, seeding does not work and
@@ -139,19 +146,16 @@ class MyEnv(gym.Env):
         # wrapper from register() handle running out of time. The agent treats
         # the two differently, and so should you.
         piece = self.pieces[self.current_piece]
-        terminated = self.place(piece, action)
+        terminated = not self.place(piece, action)
         reward = self._get_reward()
-
-        truncated = False
-        observation = self._get_obs()
-        info = self._get_info()
-
-        # if we terminated
-        if not reward:
-            return observation, reward, terminated, truncated, info
 
         if self.render_mode == "human":
             self._render_frame()
+
+        self.current_piece = int(self.np_random.integers(3))
+        truncated = False
+        observation = self._get_obs()
+        info = self._get_info()
         return observation, reward, terminated, truncated, info
 
     def render(self):
