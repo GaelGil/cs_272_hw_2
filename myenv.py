@@ -23,6 +23,7 @@ class MyEnv(gym.Env):
         # num of rows and cols
         self.rows = rows
         self.cols = cols
+        # piece width
         self.piece_width = piece_width
 
         # our board
@@ -44,7 +45,7 @@ class MyEnv(gym.Env):
             }
         )
         # which column we choose the agent to drop the piece in
-        # all availabel colums expcept the ones that would cause out of bounds on the right side
+        # all availabel colums except the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
         self.action_space = gym.spaces.Discrete(self.cols - self.piece_width + 1)
 
@@ -75,14 +76,17 @@ class MyEnv(gym.Env):
 
     def _get_reward(self):
         """
-        check if rows have been cleared
+        Caculate the reward based on the number of rows cleared. if no rows cleared
+        then we get negative reward
         """
         cleared = []
+        # get index of rows that have been cleared
         for i in range(len(self.board)):
             row = self.board[i]
             if sum(row) == self.cols:
                 cleared.append(i)
 
+        # clear them
         for i in range(len(cleared)):
             self.board = np.delete(self.board, cleared[i], axis=0)
             new_rows = np.zeros((1, self.cols), dtype=np.int32)
@@ -105,7 +109,6 @@ class MyEnv(gym.Env):
     def can_place(self, piece, top_row, col):
         """
         Check if we can place a piece
-
         """
         for piece_row in range(piece.shape[0]):
             for piece_col in range(piece.shape[1]):
@@ -124,6 +127,7 @@ class MyEnv(gym.Env):
         Place the piece on the board
         """
         top_row = 0
+        # if we cannot place return
         if not self.can_place(piece, top_row, col):
             return False
 
@@ -131,6 +135,7 @@ class MyEnv(gym.Env):
         while self.can_place(piece, top_row + 1, col):
             top_row += 1
 
+        # place the row on board itself
         for piece_row in range(piece.shape[0]):
             for piece_col in range(piece.shape[1]):
                 if piece[piece_row, piece_col] == 1:
@@ -145,13 +150,16 @@ class MyEnv(gym.Env):
         # agent died, game over. Leave truncated as False and let the TimeLimit
         # wrapper from register() handle running out of time. The agent treats
         # the two differently, and so should you.
+        # get the piece
         piece = self.pieces[self.current_piece]
+        # place it
         terminated = not self.place(piece, action)
+        # get the reward
         reward = self._get_reward()
 
         if self.render_mode == "human":
             self._render_frame()
-
+        # set a new current piece
         self.current_piece = int(self.np_random.integers(3))
         truncated = False
         observation = self._get_obs()
@@ -165,6 +173,10 @@ class MyEnv(gym.Env):
         raise NotImplementedError
 
     def _render_frame(self):
+        """
+        pygame stuff for rendering. Used (https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/)
+        as reference/template and updated to fit our env.
+        """
         if self.window is None and self.render_mode == "human":
             pygame.init()
             pygame.display.init()
@@ -238,7 +250,7 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    env = MyEnv(rows=5, cols=6, piece_width=3, render_mode="human")
+    env = MyEnv(rows=4, cols=4, piece_width=2, render_mode="human")
     try:
         check_env(env)
         print("Environment passes all checks!")
@@ -250,6 +262,23 @@ if __name__ == "__main__":
     print(f"OBSERVATION: {obs}")
     print(f"INFO: {info}")
     running = True
+
+    # random test loop
+    for i in range(100):
+        action = int(env.np_random.integers(3))
+        obs, reward, terminated, truncated, info = env.step(action=action)
+        print(f"index: {i}")
+        print(f"ACTION: {action}")
+        print(f"REWARD: {reward}")
+        print(f"TERMINATED: {terminated}")
+        print(f"TRUNACTED: {truncated}")
+        print(f"INFO: {info}")
+        print(f"OBSERVATION: {obs}")
+        print()
+
+        if terminated:
+            break
+
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
