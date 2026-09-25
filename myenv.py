@@ -32,9 +32,9 @@ class MyEnv(gym.Env):
 
         # possible pieces for our agent to see
         self.pieces = [
-            np.array([[1, 0, 0], [1, 0, 0], [1, 1, 0]], dtype=np.int32),  # L
-            np.array([[0, 1, 0], [0, 1, 0], [0, 1, 0]], dtype=np.int32),  # I
-            np.array([[1, 1, 1], [0, 1, 0], [0, 1, 0]], dtype=np.int32),  # T
+            np.array([[1, 0], [1, 1]], dtype=np.int32),  # L
+            np.array([[1, 0], [1, 0]], dtype=np.int32),  # I
+            np.array([[1, 1], [0, 1]], dtype=np.int32),  # upside Down L
         ]
 
         self.observation_space = gym.spaces.Dict(
@@ -94,15 +94,26 @@ class MyEnv(gym.Env):
             self._render_frame()
         return self._get_obs(), self._get_info()
 
+    def can_place(self, piece, top_row, col):
+        for piece_row in range(piece.shape[0]):
+            for piece_col in range(piece.shape[1]):
+                if piece[piece_row, piece_col] == 1:
+                    board_row = top_row + piece_row
+                    board_col = col + piece_col
+
+                    if board_row >= self.rows:
+                        return False
+                    if self.board[board_row, board_col] == 1:
+                        return False
+        return True
+
     def place(self, piece, col: int):
         """
         Place the piece on the board
         """
-        base = piece[-1]
-        for row in reversed(self.board):
-            if sum(row) == len(row):
-                return 1
-        return 0
+        top_row = 0
+        if not self.can_place(piece, top_row, col):
+            return False
 
     def terminated(self, piece, col: int):
         """
