@@ -10,6 +10,7 @@ import gymnasium as gym
 import numpy as np
 import pygame
 from gymnasium.envs.registration import register
+from collections import deque
 
 
 class MyEnv(gym.Env):
@@ -30,13 +31,22 @@ class MyEnv(gym.Env):
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
         # current piece the agent sees
         self.current_piece = 0
-
+        
         # possible pieces for our agent to see
+        self.pieces = [
+            np.array([[1]], dtype=np.int32),            # 1x1
+            np.array([[1], [1]], dtype=np.int32),       # 1x2
+            np.array([[1], [1], [1]], dtype=np.int32),  # 1x3
+            np.array([[1, 1]], dtype=np.int32),         # 2x1
+        ]
+
+        """
         self.pieces = [
             np.array([[1, 0], [1, 1]], dtype=np.int32),  # L
             np.array([[1, 0], [1, 0]], dtype=np.int32),  # I
             np.array([[1, 1], [0, 1]], dtype=np.int32),  # upside Down L
         ]
+        """
 
         self.observation_space = gym.spaces.Dict(
             {
@@ -44,6 +54,8 @@ class MyEnv(gym.Env):
                 "piece": gym.spaces.Discrete(3),
             }
         )
+
+
         # which column we choose the agent to drop the piece in
         # all availabel colums except the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
