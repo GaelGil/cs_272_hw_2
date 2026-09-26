@@ -41,7 +41,7 @@ class MyEnv(gym.Env):
         self.observation_space = gym.spaces.Dict(
             {
                 "board": gym.spaces.MultiBinary((self.rows, self.cols)),
-                "piece": gym.spaces.Discrete(3),
+                "piece": gym.spaces.Discrete(4),
             }
         )
 
@@ -49,6 +49,10 @@ class MyEnv(gym.Env):
         # all availabel colums except the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
         self.action_space = gym.spaces.Discrete(self.cols)
+
+        # TODO: need to represent observation space as a Discrete obj since
+        # the SARSA agent needs to read env.observation_space.n
+        self.boards = self._enum_boards()
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -79,8 +83,30 @@ class MyEnv(gym.Env):
                 board_id = board_id // 2
         return board
 
-    # TODO: need to represent observation space as a Discrete obj since
-    # the SARSA agent needs to read env.observation_space.n
+    def _enum_boards(self):
+        """BFS to enumerate all possible boardstates.
+        
+        Returns:
+            list[int]: Sorted ints representing each board state
+        """
+
+        temp_board = self.board
+        queue = deque([0])
+        boards_seen = {0}
+
+        while queue:
+            current_board_id = queue.popleft()
+            for piece in self.pieces:
+                for col in range(3):
+                    self.board = self._int_to_board(current_board_id)
+                    if self.place(piece, col):
+                        self._get_reward()
+                        new_board_id = self._board_to_int(self.board)
+                        if new_board_id not in boards_seen:
+                            boards_seen.add(new_board_id)
+                            queue.append(new_board_id)
+        self.board = temp_board
+        return sorted(boards_seen)
 
     def _get_obs(self):
         """Convert internal state to observation format.
@@ -301,6 +327,7 @@ if __name__ == "__main__":
         print(f"TRUNACTED: {truncated}")
         print(f"INFO: {info}")
         print(f"OBSERVATION: {obs}")
+        print(f"NUMACTION: {env.action_space.n}")
         print()
 
         if terminated:
