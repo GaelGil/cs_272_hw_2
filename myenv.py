@@ -38,21 +38,14 @@ class MyEnv(gym.Env):
             np.array([[1, 1]], dtype=np.int32),         # 2x1
         ]
 
-        self.observation_space = gym.spaces.Dict(
-            {
-                "board": gym.spaces.MultiBinary((self.rows, self.cols)),
-                "piece": gym.spaces.Discrete(4),
-            }
-        )
-
         # which column we choose the agent to drop the piece in
         # all availabel colums except the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
         self.action_space = gym.spaces.Discrete(self.cols)
 
-        # TODO: need to represent observation space as a Discrete obj since
-        # the SARSA agent needs to read env.observation_space.n
         self.boards = self._enum_boards()
+        self.board_index = {board_id: i for i, board_id in enumerate(self.boards)}
+        self.observation_space = gym.spaces.Discrete(len(self.boards) * len(self.pieces))
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -112,9 +105,10 @@ class MyEnv(gym.Env):
         """Convert internal state to observation format.
 
         Returns:
-            dict: Observation with agent and target positions
+            int: board_index * pieces + current piece
         """
-        return {"piece": self.current_piece, "board": self.board.copy()}
+        board_id = self._board_to_int(self.board)
+        return self.board_index[board_id] * len(self.pieces) + self.current_piece
 
     def _get_info(self):
         """Compute auxiliary information for debugging.
@@ -122,7 +116,7 @@ class MyEnv(gym.Env):
         Returns:
             dict: Info with distance between agent and target
         """
-        return {}
+        return {"board": self.board.copy(), "piece": self.current_piece}
 
     def _get_reward(self):
         """
@@ -221,7 +215,8 @@ class MyEnv(gym.Env):
         """Return a readable picture of the current state, as a string."""
         if self.render_mode == "rgb_array":
             return self._render_frame()
-        raise NotImplementedError
+        elif self.render_mode == "human":
+            self._render_frame
 
     def _render_frame(self):
         """
