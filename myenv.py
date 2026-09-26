@@ -59,6 +59,29 @@ class MyEnv(gym.Env):
         self.window = None
         self.clock = None
 
+    def _board_to_int(self, board):
+        """Convert board state to int: row * cols + col"""
+        board_id = 0
+        cell_index = 0
+        for row in range(self.rows):
+            for col in range(self.cols):
+                if board[row][col] == 1:
+                    board_id += 2 ** cell_index
+                cell_index += 1
+        return board_id
+
+    def _int_to_board(self, board_id):
+        """Convert board_id back into board state obj"""
+        board = np.zeros((self.rows, self.cols), dtype=np.int32)
+        for row in range(self.rows):
+            for col in range(self.cols):
+                board[row][col] = board_id % 2
+                board_id = board_id // 2
+        return board
+
+    # TODO: need to represent observation space as a Discrete obj since
+    # the SARSA agent needs to read env.observation_space.n
+
     def _get_obs(self):
         """Convert internal state to observation format.
 
