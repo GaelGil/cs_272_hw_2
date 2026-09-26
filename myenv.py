@@ -19,13 +19,11 @@ class MyEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
 
     def __init__(
-        self, rows: int, cols: int, piece_width: int, render_mode: str | None = None
+        self, rows: int, cols: int, render_mode: str | None = None
     ):
         # num of rows and cols
         self.rows = rows
         self.cols = cols
-        # piece width
-        self.piece_width = piece_width
 
         # our board
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
@@ -40,14 +38,6 @@ class MyEnv(gym.Env):
             np.array([[1, 1]], dtype=np.int32),         # 2x1
         ]
 
-        """
-        self.pieces = [
-            np.array([[1, 0], [1, 1]], dtype=np.int32),  # L
-            np.array([[1, 0], [1, 0]], dtype=np.int32),  # I
-            np.array([[1, 1], [0, 1]], dtype=np.int32),  # upside Down L
-        ]
-        """
-
         self.observation_space = gym.spaces.Dict(
             {
                 "board": gym.spaces.MultiBinary((self.rows, self.cols)),
@@ -55,11 +45,10 @@ class MyEnv(gym.Env):
             }
         )
 
-
         # which column we choose the agent to drop the piece in
         # all availabel colums except the ones that would cause out of bounds on the right side
         # we will assume that the far left piece is the col we choose.
-        self.action_space = gym.spaces.Discrete(self.cols - self.piece_width + 1)
+        self.action_space = gym.spaces.Discrete(self.cols)
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -113,7 +102,7 @@ class MyEnv(gym.Env):
 
         # set the board to empty and set the piece to random piece
         self.board.fill(0)
-        self.current_piece = int(self.np_random.integers(3))
+        self.current_piece = int(self.np_random.integers(4))
         if self.render_mode == "human":
             self._render_frame()
         return self._get_obs(), self._get_info()
@@ -138,6 +127,7 @@ class MyEnv(gym.Env):
         """
         Place the piece on the board
         """
+        col = min(col, self.cols - piece.shape[1])  # prevents 2x1 piece from being placed out of bounds
         top_row = 0
         # if we cannot place return
         if not self.can_place(piece, top_row, col):
@@ -262,7 +252,7 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    env = MyEnv(rows=4, cols=4, piece_width=2, render_mode="human")
+    env = MyEnv(rows=3, cols=3, render_mode="human")
     try:
         check_env(env)
         print("Environment passes all checks!")
@@ -278,7 +268,7 @@ if __name__ == "__main__":
 
     # random test loop
     for i in range(100):
-        action = int(env.np_random.integers(len(env.pieces)))
+        action = int(env.np_random.integers(env.action_space.n))
         obs, reward, terminated, truncated, info = env.step(action=action)
         print(f"index: {i}")
         print(f"ACTION: {action}")
