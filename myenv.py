@@ -136,7 +136,7 @@ class MyEnv(gym.Env):
             new_rows = np.zeros((1, self.cols), dtype=np.int32)
             self.board = np.append(new_rows, self.board, axis=0)
 
-        return len(cleared) if len(cleared) > 0 else -10
+        return -1 + 10 * len(cleared) ** 2  # -1 place piece, (+10 line clear) ** 2 per line
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         # This line seeds self.np_random. Without it, seeding does not work and
@@ -145,7 +145,7 @@ class MyEnv(gym.Env):
 
         # set the board to empty and set the piece to random piece
         self.board.fill(0)
-        self.current_piece = int(self.np_random.integers(4))
+        self.current_piece = int(self.np_random.integers(len(self.pieces)))
         if self.render_mode == "human":
             self._render_frame()
         return self._get_obs(), self._get_info()
@@ -199,13 +199,17 @@ class MyEnv(gym.Env):
         piece = self.pieces[self.current_piece]
         # place it
         terminated = not self.place(piece, action)
-        # get the reward
-        reward = self._get_reward()
+        
+        if terminated:
+            reward = -20
+        else:
+            # get the reward
+            reward = self._get_reward()
+            # set a new current piece
+            self.current_piece = int(self.np_random.integers(len(self.pieces)))
 
         if self.render_mode == "human":
             self._render_frame()
-        # set a new current piece
-        self.current_piece = int(self.np_random.integers(len(self.pieces)))
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
@@ -322,7 +326,6 @@ if __name__ == "__main__":
         print(f"TRUNACTED: {truncated}")
         print(f"INFO: {info}")
         print(f"OBSERVATION: {obs}")
-        print(f"NUMACTION: {env.action_space.n}")
         print()
 
         if terminated:
