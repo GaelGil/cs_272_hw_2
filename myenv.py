@@ -16,7 +16,7 @@ from collections import deque
 class MyEnv(gym.Env):
     """TODO: one line on what this world is and what the agent is trying to do."""
 
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 4}
+    metadata = {"render_modes": ["human", "rgb_array", "ansi"], "render_fps": 4}
 
     def __init__(
         self, rows: int, cols: int, render_mode: str | None = None
@@ -217,10 +217,29 @@ class MyEnv(gym.Env):
 
     def render(self):
         """Return a readable picture of the current state, as a string."""
-        if self.render_mode == "rgb_array":
+        if self.render_mode == "ansi":
+            return self._render_ansi()
+        elif self.render_mode == "rgb_array":
             return self._render_frame()
         elif self.render_mode == "human":
-            self._render_frame
+            self._render_frame()
+
+    def  _render_ansi(self):
+        """Render board as ansi"""
+        ansi_board = f"#{'=' * (self.cols * 3)}#\n"
+
+        for row in range(self.rows):
+            ansi_board += "|"
+            for col in range(self.cols):
+                if self.board[row][col] == 1:
+                    ansi_board += " 1 "
+                else:
+                    ansi_board += " 0 "
+            ansi_board += "|\n"
+        ansi_board += f"#{'=' * (self.cols * 3)}#\n"
+        piece = self.pieces[self.current_piece]
+        ansi_board += f"Current Piece: {piece.shape[1]}x{piece.shape[0]}\n"
+        return ansi_board
 
     def _render_frame(self):
         """
@@ -300,7 +319,8 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    env = MyEnv(rows=3, cols=3, render_mode="human")
+    render_mode="ansi"
+    env = MyEnv(rows=3, cols=3, render_mode=render_mode)
     try:
         check_env(env)
         print("Environment passes all checks!")
@@ -312,6 +332,8 @@ if __name__ == "__main__":
     print(f"OBSERVATION: {obs}")
     print(f"PICE: {env.pieces[env.current_piece]}")
     print(f"INFO: {info}")
+    if env.render_mode == "ansi":
+        print(env.render())
     running = True
 
     # random test loop
@@ -326,12 +348,14 @@ if __name__ == "__main__":
         print(f"TRUNACTED: {truncated}")
         print(f"INFO: {info}")
         print(f"OBSERVATION: {obs}")
+        if env.render_mode == "ansi":
+            print(env.render())
         print()
 
         if terminated:
             break
 
-    while running:
+    while running and env.render_mode == "human":
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
