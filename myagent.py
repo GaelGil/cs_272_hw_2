@@ -29,7 +29,12 @@ def argmax_action(values: np.ndarray, rng: np.random.Generator) -> int:
     Returns:
         int: an action
     """
-    raise NotImplementedError
+    max_val = max(values)
+    max_actions = []
+    for action in range(len(values)):
+        if values[action] == max_val:
+            max_actions.append(action)
+    return int(rng.choice(max_actions))
 
 
 class SarsaLambdaAgent:
@@ -81,7 +86,9 @@ class SarsaLambdaAgent:
 
     def init_qtable(self, init_val: float = 0.0) -> np.ndarray:
         """Build the q table, shape (n_states, n_actions), filled with init_val."""
-        raise NotImplementedError
+        qtable = np.zeros((self.n_states, self.n_actions))
+        qtable += init_val
+        return qtable
 
     def eps_greedy(self, state: int, exploration: bool = True) -> int:
         """Epsilon-greedy action selection over the current q table.
@@ -94,7 +101,11 @@ class SarsaLambdaAgent:
         Returns:
             int: an action
         """
-        raise NotImplementedError
+        if exploration:
+            rand_roll = self.rng.random()
+            if rand_roll < self.eps:
+                return int(self.rng.integers(self.n_actions))   # explore and pick random action
+        return argmax_action(self.q[state], self.rng)   # exploit and pick highest qvalue
 
     def learn(self) -> list[float]:
         """Run SARSA(lambda) for self.total_epi episodes, updating self.q.
@@ -144,3 +155,29 @@ class RandomAgent(SarsaLambdaAgent):
                     break
             returns.append(total)
         return returns
+
+
+if __name__ == "__main__":
+    import myenv # delete this before submission
+
+    env = gym.make("cs272/MyEnv-v0")
+    agent = SarsaLambdaAgent(env, seed=42)
+    rng = np.random.default_rng(42)
+
+    print(agent.q.shape)
+    print(agent.q[0])
+
+    print(f"argmax_action: {argmax_action(np.array([1.0, 5.0, 10.0]), rng)}")
+
+    action_count = [0, 0, 0]
+    for i in range(100):
+        action = argmax_action(np.array([1.0, 1.0, 1.0]), rng)
+        action_count[action] += 1
+    print(action_count)
+
+    explore_count = 0
+    agent.q[10] = [0.0, 0.0, 10.0]
+    for i in range(100):
+        if agent.eps_greedy(10) != 2:
+            explore_count += 1
+    print(explore_count)
