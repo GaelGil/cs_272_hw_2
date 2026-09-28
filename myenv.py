@@ -19,7 +19,7 @@ class MyEnv(gym.Env):
     metadata = {"render_modes": ["human", "rgb_array", "ansi"], "render_fps": 4}
 
     def __init__(
-        self, rows: int, cols: int, render_mode: str | None = None
+        self, rows: int = 3, cols: int = 3, render_mode: str | None = None
     ):
         # num of rows and cols
         self.rows = rows
@@ -320,7 +320,7 @@ from gymnasium.utils.env_checker import check_env
 if __name__ == "__main__":
     # This will catch many common issues
     render_mode="ansi"
-    env = MyEnv(rows=3, cols=3, render_mode=render_mode)
+    env = MyEnv(render_mode=render_mode)
     try:
         check_env(env)
         print("Environment passes all checks!")
