@@ -171,7 +171,18 @@ class SarsaLambdaAgent:
                 bool: True if it reached a terminal state, False if it ran out
             ]
         """
-        raise NotImplementedError
+        episode = []
+        state, _ = self.env.reset()
+        for i in range(max_steps):
+            action = self.eps_greedy(state=state, exploration=False)
+            state_prime, reward, terminated, truncated, _ = self.env.step(action)
+            episode.append((state, action, reward))
+            if terminated:
+                return episode, True
+            elif truncated:
+                return episode, False
+            state = state_prime
+        return episode, False
 
     def calc_return(
         self, episode: list[tuple[Any, Any, float]], discounted: bool = False
@@ -210,8 +221,6 @@ class RandomAgent(SarsaLambdaAgent):
 
 
 if __name__ == "__main__":
-    import myenv # temporary for testing. delete before submission
-    
     env = gym.make("cs272/MyEnv-v0")
     agent = SarsaLambdaAgent(env, seed=42)
     rng = np.random.default_rng(42)
@@ -241,3 +250,4 @@ if __name__ == "__main__":
     episode = [(0, 1, -1.0), (4, 1, 40.0), (0, 2, -1.0), (3, 2, -20.0)]
     print(agent2.calc_return(episode))
     print(agent2.calc_return(episode, discounted=True))
+
