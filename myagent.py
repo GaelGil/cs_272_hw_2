@@ -104,8 +104,10 @@ class SarsaLambdaAgent:
         if exploration:
             rand_roll = self.rng.random()
             if rand_roll < self.eps:
-                return int(self.rng.integers(self.n_actions))   # explore and pick random action
-        return argmax_action(self.q[state], self.rng)   # exploit and pick highest qvalue
+                return int(
+                    self.rng.integers(self.n_actions)
+                )  # explore and pick random action
+        return argmax_action(self.q[state], self.rng)  # exploit and pick highest qvalue
 
     def learn(self) -> list[float]:
         """Run SARSA(lambda) for self.total_epi episodes, updating self.q.
@@ -114,7 +116,11 @@ class SarsaLambdaAgent:
             list[float]: the undiscounted return of each training episode, in
             order. myrunner.py plots these.
         """
-        raise NotImplementedError
+        for episode in range(self.total_epi):
+            self.env.reset()
+
+        return 0
+        # raise NotImplementedError
 
     def best_run(
         self, max_steps: int = 300
@@ -158,8 +164,6 @@ class RandomAgent(SarsaLambdaAgent):
 
 
 if __name__ == "__main__":
-    import myenv # delete this before submission
-
     env = gym.make("cs272/MyEnv-v0")
     agent = SarsaLambdaAgent(env, seed=42)
     rng = np.random.default_rng(42)
