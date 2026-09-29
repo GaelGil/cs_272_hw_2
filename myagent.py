@@ -177,7 +177,18 @@ class SarsaLambdaAgent:
         self, episode: list[tuple[Any, Any, float]], discounted: bool = False
     ) -> float:
         """Return of an episode given as [(s, a, r), ...]."""
-        raise NotImplementedError
+        reward_total = 0.0
+
+        if not discounted:
+            for _, _, reward in episode:
+                reward_total += reward
+            return reward_total
+        else:
+            discount = 1.0
+            for _, _, reward in episode:
+                reward_total += discount * reward
+                discount *= self.gamma
+        return reward_total
 
 
 class RandomAgent(SarsaLambdaAgent):
@@ -226,3 +237,7 @@ if __name__ == "__main__":
     agent2 = SarsaLambdaAgent(env, lam = 0.9, total_epi=2000, seed=42)
     returns = agent2.learn()
     print(sum(returns[:100])/100, sum(returns[-100:])/100)
+
+    episode = [(0, 1, -1.0), (4, 1, 40.0), (0, 2, -1.0), (3, 2, -20.0)]
+    print(agent2.calc_return(episode))
+    print(agent2.calc_return(episode, discounted=True))
