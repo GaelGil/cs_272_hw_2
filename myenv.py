@@ -6,11 +6,12 @@ readme.
 Delete this docstring and describe your own world instead.
 """
 
+from collections import deque
+
 import gymnasium as gym
 import numpy as np
 import pygame
 from gymnasium.envs.registration import register
-from collections import deque
 
 
 class MyEnv(gym.Env):
@@ -18,9 +19,7 @@ class MyEnv(gym.Env):
 
     metadata = {"render_modes": ["human", "rgb_array", "ansi"], "render_fps": 4}
 
-    def __init__(
-        self, rows: int = 3, cols: int = 3, render_mode: str | None = None
-    ):
+    def __init__(self, rows: int = 3, cols: int = 3, render_mode: str | None = None):
         # num of rows and cols
         self.rows = rows
         self.cols = cols
@@ -29,13 +28,13 @@ class MyEnv(gym.Env):
         self.board = np.zeros((self.rows, self.cols), dtype=np.int32)
         # current piece the agent sees
         self.current_piece = 0
-        
+
         # possible pieces for our agent to see
         self.pieces = [
-            np.array([[1]], dtype=np.int32),            # 1x1
-            np.array([[1], [1]], dtype=np.int32),       # 1x2
+            np.array([[1]], dtype=np.int32),  # 1x1
+            np.array([[1], [1]], dtype=np.int32),  # 1x2
             np.array([[1], [1], [1]], dtype=np.int32),  # 1x3
-            np.array([[1, 1]], dtype=np.int32),         # 2x1
+            np.array([[1, 1]], dtype=np.int32),  # 2x1
         ]
 
         # which column we choose the agent to drop the piece in
@@ -45,7 +44,9 @@ class MyEnv(gym.Env):
 
         self.boards = self._enum_boards()
         self.board_index = {board_id: i for i, board_id in enumerate(self.boards)}
-        self.observation_space = gym.spaces.Discrete(len(self.boards) * len(self.pieces))
+        self.observation_space = gym.spaces.Discrete(
+            len(self.boards) * len(self.pieces)
+        )
 
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
@@ -63,7 +64,7 @@ class MyEnv(gym.Env):
         for row in range(self.rows):
             for col in range(self.cols):
                 if board[row][col] == 1:
-                    board_id += 2 ** cell_index
+                    board_id += 2**cell_index
                 cell_index += 1
         return board_id
 
@@ -78,7 +79,7 @@ class MyEnv(gym.Env):
 
     def _enum_boards(self):
         """BFS to enumerate all possible boardstates.
-        
+
         Returns:
             list[int]: Sorted ints representing each board state
         """
@@ -136,7 +137,9 @@ class MyEnv(gym.Env):
             new_rows = np.zeros((1, self.cols), dtype=np.int32)
             self.board = np.append(new_rows, self.board, axis=0)
 
-        return -1 + 10 * len(cleared) ** 2  # -1 place piece, (+10 line clear) ** 2 per line
+        return (
+            -1 + 10 * len(cleared) ** 2
+        )  # -1 place piece, (+10 line clear) ** 2 per line
 
     def reset(self, seed: int | None = None, options: dict | None = None):
         # This line seeds self.np_random. Without it, seeding does not work and
@@ -170,7 +173,9 @@ class MyEnv(gym.Env):
         """
         Place the piece on the board
         """
-        col = min(col, self.cols - piece.shape[1])  # prevents 2x1 piece from being placed out of bounds
+        col = min(
+            col, self.cols - piece.shape[1]
+        )  # prevents 2x1 piece from being placed out of bounds
         top_row = 0
         # if we cannot place return
         if not self.can_place(piece, top_row, col):
@@ -199,7 +204,7 @@ class MyEnv(gym.Env):
         piece = self.pieces[self.current_piece]
         # place it
         terminated = not self.place(piece, action)
-        
+
         if terminated:
             reward = -20
         else:
@@ -224,7 +229,7 @@ class MyEnv(gym.Env):
         elif self.render_mode == "human":
             self._render_frame()
 
-    def  _render_ansi(self):
+    def _render_ansi(self):
         """Render board as ansi"""
         ansi_board = f"#{'=' * (self.cols * 3)}#\n"
 
@@ -319,7 +324,7 @@ from gymnasium.utils.env_checker import check_env
 
 if __name__ == "__main__":
     # This will catch many common issues
-    render_mode="ansi"
+    render_mode = "ansi"
     env = MyEnv(render_mode=render_mode)
     try:
         check_env(env)
