@@ -4,6 +4,7 @@ The world is a simplified version of tetris. The agent is trying to find the bes
 The agent does not have the option to rotate and there is no time or dropdown. The sign appears and the agent must find the best action to maximise reward. 
 
 ### Observation space
+The oberservation space is all the possible board layouts with all possible pieces. A single observation is a board layout and the current piece. 
 
 ### Action Space
 The action space is the number of colums that the agent can choose from. In our case `cols=3` so the action space is 3. 
