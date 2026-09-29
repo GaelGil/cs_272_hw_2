@@ -13,8 +13,10 @@ importlib.import_module("myenv")
 if __name__ == "__main__":
     lambdas = [0, 0.3, 0.6, 0.9, 1.0]
     seeds = [0, 1, 2, 3, 4]
+    window = 100
     results = {}
 
+    # train an agent with the given lambdas each with seed of 0-4.
     for lambda_ in lambdas:
         runs = []
         for seed in seeds:
@@ -26,8 +28,16 @@ if __name__ == "__main__":
         results[lambda_] = np.array(runs)
 
     for lambda_, runs in results.items():
-        average_curve = runs.mean(axis=0)
-        plt.plot(average_curve, label=f"Lambda={lambda_}")
+        smoothed_runs = np.array(
+            [np.convolve(run, np.ones(window) / window, mode="valid") for run in runs]
+        )
+
+        mean_curve = smoothed_runs.mean(axis=0)
+        spread = smoothed_runs.std(axis=0)
+        episodes = np.arange(window - 1, len(runs[0]))
+
+        plt.plot(episodes, mean_curve, label=f"Lambda={lambda_}")
+        plt.fill_between(episodes, mean_curve - spread, mean_curve + spread, alpha=0.15)
 
     plt.xlabel("Episode")
     plt.ylabel("Average return")
