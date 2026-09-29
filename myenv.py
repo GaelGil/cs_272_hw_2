@@ -10,14 +10,13 @@ from collections import deque
 
 import gymnasium as gym
 import numpy as np
-import pygame
 from gymnasium.envs.registration import register
 
 
 class MyEnv(gym.Env):
     """TODO: one line on what this world is and what the agent is trying to do."""
 
-    metadata = {"render_modes": ["human", "rgb_array", "ansi"], "render_fps": 4}
+    metadata = {"render_modes": ["ansi"], "render_fps": 4}
 
     def __init__(self, rows: int = 3, cols: int = 3, render_mode: str | None = None):
         # num of rows and cols
@@ -37,9 +36,7 @@ class MyEnv(gym.Env):
             np.array([[1, 1]], dtype=np.int32),  # 2x1
         ]
 
-        # which column we choose the agent to drop the piece in
-        # all availabel colums except the ones that would cause out of bounds on the right side
-        # we will assume that the far left piece is the col we choose.
+        # columns agent can choose
         self.action_space = gym.spaces.Discrete(self.cols)
 
         # all possible board layouts
@@ -55,11 +52,6 @@ class MyEnv(gym.Env):
         if render_mode is not None and render_mode not in self.metadata["render_modes"]:
             raise ValueError(f"unsupported render_mode: {render_mode}")
         self.render_mode = render_mode
-
-        # pygame stuff (https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/)
-        self.window_size = 512  # The size of the PyGame window
-        self.window = None
-        self.clock = None
 
     def _board_to_int(self, board):
         """Convert board state to int: row * cols + col"""
@@ -156,8 +148,6 @@ class MyEnv(gym.Env):
         # set the board to empty and set the piece to random piece
         self.board.fill(0)
         self.current_piece = int(self.np_random.integers(len(self.pieces)))
-        if self.render_mode == "human":
-            self._render_frame()
         return self._get_obs(), self._get_info()
 
     def can_place(self, piece, top_row, col):
@@ -220,21 +210,16 @@ class MyEnv(gym.Env):
             # set a new current piece
             self.current_piece = int(self.np_random.integers(len(self.pieces)))
 
-        if self.render_mode == "human":
-            self._render_frame()
         truncated = False
         observation = self._get_obs()
         info = self._get_info()
         return observation, reward, terminated, truncated, info
 
     def render(self):
-        """Return a readable picture of the current state, as a string."""
+        """Return a text representation when ANSI rendering is enabled."""
         if self.render_mode == "ansi":
             return self._render_ansi()
-        elif self.render_mode == "rgb_array":
-            return self._render_frame()
-        elif self.render_mode == "human":
-            self._render_frame()
+        return None
 
     def _render_ansi(self):
         """Render board as ansi"""
@@ -252,72 +237,6 @@ class MyEnv(gym.Env):
         piece = self.pieces[self.current_piece]
         ansi_board += f"Current Piece: {piece.shape[1]}x{piece.shape[0]}\n"
         return ansi_board
-
-    def _render_frame(self):
-        """
-        pygame stuff for rendering. Used (https://gymnasium.farama.org/tutorials/gymnasium_basics/environment_creation/)
-        as reference/template and updated to fit our env.
-        """
-        if self.window is None and self.render_mode == "human":
-            pygame.init()
-            pygame.display.init()
-            self.window = pygame.display.set_mode((self.window_size, self.window_size))
-        if self.clock is None and self.render_mode == "human":
-            self.clock = pygame.time.Clock()
-
-        canvas = pygame.Surface((self.window_size, self.window_size))
-        canvas.fill((255, 255, 255))
-        pix_square_size = (
-            self.window_size / self.cols
-        )  # The size of a single grid square in pixels
-
-        # draw fillde cells on board
-        for row in range(self.rows):
-            for col in range(self.cols):
-                if self.board[row, col] == 1:
-                    pygame.draw.rect(
-                        canvas,
-                        (0, 120, 255),
-                        pygame.Rect(
-                            col * pix_square_size,
-                            row * pix_square_size,
-                            pix_square_size,
-                            pix_square_size,
-                        ),
-                    )
-
-        # draw a rows on a grid
-        for row in range(self.rows + 1):
-            y = row * pix_square_size
-            pygame.draw.line(
-                canvas, (0, 0, 0), (0, y), (self.cols * pix_square_size, y), width=2
-            )
-        # draw cols on a grid
-        for col in range(self.cols + 1):
-            x = col * pix_square_size
-            pygame.draw.line(
-                canvas, (0, 0, 0), (x, 0), (x, self.rows * pix_square_size), width=2
-            )
-
-        if self.render_mode == "human":
-            # The following line copies our drawings from `canvas` to the visible window
-            self.window.blit(canvas, canvas.get_rect())
-            pygame.event.pump()
-            pygame.display.update()
-
-            # We need to ensure that human-rendering occurs at the predefined framerate.
-            # The following line will automatically add a delay to keep the framerate stable.
-            self.clock.tick(self.metadata["render_fps"])
-        else:  # rgb_array
-            return np.transpose(
-                np.array(pygame.surfarray.pixels3d(canvas)), axes=(1, 0, 2)
-            )
-
-    def close(self):
-        if self.window is not None:
-            pygame.display.quit()
-            pygame.quit()
-
 
 # TODO: name your environment. The id must start with "cs272/" and end with a
 # version, and max_episode_steps must be large enough that a competent agent can
@@ -346,8 +265,6 @@ if __name__ == "__main__":
     print(f"INFO: {info}")
     if env.render_mode == "ansi":
         print(env.render())
-    running = True
-
     # random test loop
     for i in range(100):
         action = int(env.np_random.integers(env.action_space.n))
@@ -367,9 +284,4 @@ if __name__ == "__main__":
         if terminated:
             break
 
-    while running and env.render_mode == "human":
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-        env._render_frame()
     env.close()
