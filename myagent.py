@@ -118,6 +118,16 @@ class SarsaLambdaAgent:
         """
         for episode in range(self.total_epi):
             self.env.reset()
+            current_state = env.current_piece
+            action = self.eps_greedy(current_state)
+
+            for step in epsiode:
+                observation, reward, terminated, truncated, info = env.step(action)
+                a_prime = self.eps_greedy()
+                if terminated:
+                    self.q[] = reward - self.q[]
+                else:
+                    self.q = reward + self.gamma * self.q[]
 
         return 0
         # raise NotImplementedError
