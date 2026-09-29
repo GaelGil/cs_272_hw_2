@@ -117,26 +117,45 @@ class SarsaLambdaAgent:
             order. myrunner.py plots these.
         """
         returns = []
-        for _ in range(self.total_epi):
-            current_state, _ =self.env.reset()
+
+        for ep in range(self.total_epi):
+            e_traces = np.zeros((self.n_states, self.n_actions))
+
+            # seed just the first run
+            if ep == 0:
+                current_state, _ = self.env.reset(seed=self.seed)
+            else:
+                current_state, _ = self.env.reset()
 
             action = self.eps_greedy(state=current_state)
+            reward_total = 0.0
 
             while True:
-                obs, reward, terminated, truncated, _ = env.step(action)
-                state_prime, _ = obs
-                a_prime = self.eps_greedy(state=state_prime)
-                if terminated or truncated:
-                    self.q[] = reward - self.q[]
-                    break
+                state_prime, reward, terminated, truncated, _ = self.env.step(action)
+                reward_total += reward
+
+                if terminated:
+                    target = reward
                 else:
-                    self.q = reward + self.gamma *(self.q[] )
+                    a_prime = self.eps_greedy(state=state_prime)
+                    target = reward + self.gamma * self.q[state_prime, a_prime]
 
-                self.trace[state, action] = self.trace[state,action] + 1
-                for s in state_actions:
+                diff = target - self.q[current_state, action]
+                if self.trace == ACCUMULATING:
+                    e_traces[current_state, action] += 1
+                else:
+                    e_traces[current_state, action] = 1
 
+                self.q += self.alpha * diff * e_traces
+                e_traces *= self.gamma * self.lam
 
-        return [0.0]
+                if terminated or truncated:
+                    break
+                current_state = state_prime
+                action = a_prime
+
+            returns.append(reward_total)
+        return returns
 
     def best_run(
         self, max_steps: int = 300
@@ -180,6 +199,8 @@ class RandomAgent(SarsaLambdaAgent):
 
 
 if __name__ == "__main__":
+    import myenv # temporary for testing. delete before submission
+    
     env = gym.make("cs272/MyEnv-v0")
     agent = SarsaLambdaAgent(env, seed=42)
     rng = np.random.default_rng(42)
@@ -190,14 +211,18 @@ if __name__ == "__main__":
     print(f"argmax_action: {argmax_action(np.array([1.0, 5.0, 10.0]), rng)}")
 
     action_count = [0, 0, 0]
-    for i in range(100):
+    for i in range(1000):
         action = argmax_action(np.array([1.0, 1.0, 1.0]), rng)
         action_count[action] += 1
     print(action_count)
 
     explore_count = 0
     agent.q[10] = [0.0, 0.0, 10.0]
-    for i in range(100):
+    for i in range(1000):
         if agent.eps_greedy(10) != 2:
             explore_count += 1
     print(explore_count)
+
+    agent2 = SarsaLambdaAgent(env, lam = 0.9, total_epi=2000, seed=42)
+    returns = agent2.learn()
+    print(sum(returns[:100])/100, sum(returns[-100:])/100)
