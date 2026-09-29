@@ -135,11 +135,14 @@ class MyEnv(gym.Env):
             if sum(row) == self.cols:
                 cleared.append(i)
 
-        # clear them
-        for i in range(len(cleared)):
-            self.board = np.delete(self.board, cleared[i], axis=0)
-            new_rows = np.zeros((1, self.cols), dtype=np.int32)
-            self.board = np.append(new_rows, self.board, axis=0)
+        # delete rows from the bottom
+        for index in reversed(cleared):
+            self.board = np.delete(self.board, index, axis=0)
+
+        # add empty rows to top
+        if cleared:
+            empty_rows = np.zeros((len(cleared), self.cols), dtype=np.int32)
+            self.board = np.vstack((empty_rows, self.board))
 
         return (
             -1 + 10 * len(cleared) ** 2
