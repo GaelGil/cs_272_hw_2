@@ -39,9 +39,11 @@ class MyEnv(gym.Env):
         # columns agent can choose
         self.action_space = gym.spaces.Discrete(self.cols)
 
-        # all possible board layouts
+        # all possible board layouts,
+        # encoding of strings of legnth rowsxcols made by 1,0
         self.boards = self._enum_boards()
 
+        # give boards indecies
         self.board_index = {board_id: i for i, board_id in enumerate(self.boards)}
 
         # number of board layouts * num pieces
@@ -237,6 +239,7 @@ class MyEnv(gym.Env):
         piece = self.pieces[self.current_piece]
         ansi_board += f"Current Piece: {piece.shape[1]}x{piece.shape[0]}\n"
         return ansi_board
+
 
 # TODO: name your environment. The id must start with "cs272/" and end with a
 # version, and max_episode_steps must be large enough that a competent agent can
