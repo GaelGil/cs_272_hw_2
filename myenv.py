@@ -95,7 +95,7 @@ class MyEnv(gym.Env):
         while queue:
             current_board_id = queue.popleft()
             for piece in self.pieces:
-                for col in range(3):
+                for col in range(self.action_space.n):
                     self.board = self._int_to_board(current_board_id)
                     if self.place(piece, col):
                         self._get_reward()
