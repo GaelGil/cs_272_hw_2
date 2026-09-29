@@ -14,16 +14,17 @@ The agent does not have the option to rotate and their is no time or dropdown. T
 ### Observation space
 
 ### Action Space
-The action space is the number of colums. In our case `cols=3` so the action space is 3. 
+The action space is the number of colums that the agent can choose. In our case `cols=3` so the action space is 3. 
 
 
 ### Reward structure 
-
+-1 for just placing a piece,
+10 * 2 for each row cleared
 
 
 ### Starting state, termination, and truncation conditions
-The starting state is the board empty and the agent sees a piece. 
-Termination happens when a 
+The starting state is the board empty and some initial random piece.
+Termination happens when a piece cannot be placed at the top of the board. 
 
 ### Transition Noise
 We have 4 possible pieces that the agent can see. These are random. 

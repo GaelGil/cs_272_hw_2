@@ -118,19 +118,22 @@ class SarsaLambdaAgent:
         """
         returns = []
         for _ in range(self.total_epi):
-            self.env.reset()
-            current_state
-            action = self.eps_greedy()
+            current_state, _ =self.env.reset()
+
+            action = self.eps_greedy(state=current_state)
 
             while True:
-                _, reward, terminated, truncated, _ = env.step(action)
-
-                a_prime =
+                obs, reward, terminated, truncated, _ = env.step(action)
+                state_prime, _ = obs
+                a_prime = self.eps_greedy(state=state_prime)
                 if terminated or truncated:
                     self.q[] = reward - self.q[]
                     break
                 else:
                     self.q = reward + self.gamma *(self.q[] )
+
+                self.trace[state, action] = self.trace[state,action] + 1
+                for s in state_actions:
 
 
         return [0.0]

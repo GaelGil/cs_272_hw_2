@@ -42,8 +42,12 @@ class MyEnv(gym.Env):
         # we will assume that the far left piece is the col we choose.
         self.action_space = gym.spaces.Discrete(self.cols)
 
+        # all possible board layouts
         self.boards = self._enum_boards()
+
         self.board_index = {board_id: i for i, board_id in enumerate(self.boards)}
+
+        # number of board layouts * num pieces
         self.observation_space = gym.spaces.Discrete(
             len(self.boards) * len(self.pieces)
         )
