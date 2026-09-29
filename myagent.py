@@ -116,21 +116,24 @@ class SarsaLambdaAgent:
             list[float]: the undiscounted return of each training episode, in
             order. myrunner.py plots these.
         """
-        for episode in range(self.total_epi):
+        returns = []
+        for _ in range(self.total_epi):
             self.env.reset()
-            current_state = env.current_piece
-            action = self.eps_greedy(current_state)
+            current_state
+            action = self.eps_greedy()
 
-            for step in epsiode:
-                observation, reward, terminated, truncated, info = env.step(action)
-                a_prime = self.eps_greedy()
-                if terminated:
+            while True:
+                _, reward, terminated, truncated, _ = env.step(action)
+
+                a_prime =
+                if terminated or truncated:
                     self.q[] = reward - self.q[]
+                    break
                 else:
-                    self.q = reward + self.gamma * self.q[]
+                    self.q = reward + self.gamma *(self.q[] )
 
-        return 0
-        # raise NotImplementedError
+
+        return [0.0]
 
     def best_run(
         self, max_steps: int = 300
