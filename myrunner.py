@@ -11,7 +11,7 @@ importlib.import_module("myenv")
 
 
 if __name__ == "__main__":
-    env = gym.make("cs272/MyEnv-v0", render_mode="ansi")
+    env = gym.make("cs272/TetrisLite-v0", render_mode="ansi")
     agent = SarsaLambdaAgent(env, lam=0.1, seed=0, total_epi=5000)
     agent.learn()
     episode, finished = agent.best_run(render=True)
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     for lambda_ in lambdas:
         runs = []
         for seed in seeds:
-            env = gym.make("cs272/MyEnv-v0")
+            env = gym.make("cs272/TetrisLite-v0")
             agent = SarsaLambdaAgent(env, lam=lambda_, seed=seed, total_epi=5000)
             returns = agent.learn()
             runs.append(returns)

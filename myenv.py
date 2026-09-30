@@ -1,9 +1,11 @@
-"""Task 1: your own custom Gymnasium environment.
+"""TetrisLite: 3x3 board w/ a custom tetris ruleset.
 
-Design the world yourself. The requirements it has to meet are in the assignment
-readme.
+Each round, a piece is drawn at random from a set of 1x1, 1x2, 1x3, and 2x1 pieces. The agent chooses a
+column to drop the piece into. Filled rows are cleared, and the rest of the rows move down.
 
-Delete this docstring and describe your own world instead.
+The agent receives a reward of -1 for each piece placed, +10 for each row cleared, 
+and +10 * (number of lines cleared simultaneously)**2 for multi-line clears. The agent receives
+a reward of -20 for placing a piece that does not fit within the confines of the board.
 """
 
 from collections import deque
@@ -11,10 +13,11 @@ from collections import deque
 import gymnasium as gym
 import numpy as np
 from gymnasium.envs.registration import register
+from gymnasium.utils.env_checker import check_env
 
 
 class MyEnv(gym.Env):
-    """TODO: one line on what this world is and what the agent is trying to do."""
+    """3x3 Tetris board. Agent drops pieces into columns with the eventual goal of clearing rows."""
 
     metadata = {"render_modes": ["ansi"], "render_fps": 4}
 
@@ -193,13 +196,10 @@ class MyEnv(gym.Env):
         return True
 
     def step(self, action: int):
-        # TODO: apply the action, with noise drawn from self.np_random.
-        #
-        # Return terminated=True when the episode genuinely ends -- goal reached,
-        # agent died, game over. Leave truncated as False and let the TimeLimit
-        # wrapper from register() handle running out of time. The agent treats
-        # the two differently, and so should you.
-        # get the piece
+        """
+        Place current piece in chosen column, and randomly draw next piece.
+        Return terminated=True when a piece does not fit in the board.
+        """
         piece = self.pieces[self.current_piece]
         # place it
         terminated = not self.place(piece, action)
@@ -241,15 +241,12 @@ class MyEnv(gym.Env):
         return ansi_board
 
 
-# TODO: name your environment. The id must start with "cs272/" and end with a
-# version, and max_episode_steps must be large enough that a competent agent can
-# finish but small enough that a lost one gives up.
 register(
-    id="cs272/MyEnv-v0",
+    id="cs272/TetrisLite-v0",
     entry_point="myenv:MyEnv",
     max_episode_steps=300,
 )
-from gymnasium.utils.env_checker import check_env
+
 
 if __name__ == "__main__":
     # This will catch many common issues
