@@ -11,6 +11,13 @@ importlib.import_module("myenv")
 
 
 if __name__ == "__main__":
+    env = gym.make("cs272/MyEnv-v0", render_mode="ansi")
+    agent = SarsaLambdaAgent(env, lam=0.1, seed=0, total_epi=5000)
+    agent.learn()
+    episode, finished = agent.best_run(render=True)
+    print("Finished", finished)
+    print("Return", agent.calc_return(episode=episode))
+
     lambdas = [0, 0.3, 0.6, 0.9, 1.0]
     seeds = [0, 1, 2, 3, 4]
     window = 100

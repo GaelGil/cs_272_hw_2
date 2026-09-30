@@ -158,12 +158,15 @@ class SarsaLambdaAgent:
         return returns
 
     def best_run(
-        self, max_steps: int = 300
+        self,
+        max_steps: int = 300,
+        render: bool = False,
     ) -> tuple[list[tuple[int, int, float]], bool]:
         """Generate one greedy episode under the learned q table, for the report.
 
         Args:
             max_steps: give up after this many steps.
+            render: to print at each step. neede for assignment
 
         Returns:
             tuple[
@@ -173,9 +176,14 @@ class SarsaLambdaAgent:
         """
         episode = []
         state, _ = self.env.reset()
+        if render:
+            print(self.env.render())
         for i in range(max_steps):
             action = self.eps_greedy(state=state, exploration=False)
             state_prime, reward, terminated, truncated, _ = self.env.step(action)
+            if render:
+                print(f"action: {action}, reward={reward}")
+                print(self.env.render())
             episode.append((state, action, reward))
             if terminated:
                 return episode, True
