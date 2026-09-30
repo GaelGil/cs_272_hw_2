@@ -16,7 +16,8 @@ The action space is the number of colums that the agent can choose from. In our 
 
 ### Starting state, termination, and truncation conditions
 The starting state is the board empty (all zeros) and some initial random piece.
-Termination happens when a piece cannot be placed at the top of the board. 
+Termination happens when a piece cannot be placed at the top of the board.
+Truncation happens after 300 steps.
 
 ### Transition Noise
 We have 4 possible pieces that the agent can see. These are random. 
