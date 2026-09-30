@@ -260,26 +260,19 @@ if __name__ == "__main__":
         print("Environment passes all checks!")
     except Exception as e:
         print(f"Environment has issues: {e}")
-    # print(env)
+
     env.reset()
     obs, info = env.reset()
-    # print(f"OBSERVATION: {obs}")
     print(f"PICE: {env.pieces[env.current_piece]}")
-    # print(f"INFO: {info}")
     if env.render_mode == "ansi":
         print(env.render())
     # random test loop
     for i in range(100):
         action = int(env.np_random.integers(env.action_space.n))
         obs, reward, terminated, truncated, info = env.step(action=action)
-        # print(f"index: {i}")
         print(f"ACTION: {action}")
         print(f"PICE: {env.pieces[env.current_piece]}")
-        # print(f"REWARD: {reward}")
-        # print(f"TERMINATED: {terminated}")
-        # print(f"TRUNACTED: {truncated}")
-        # print(f"INFO: {info}")
-        # print(f"OBSERVATION: {obs}")
+
         if env.render_mode == "ansi":
             print(env.render())
         print()
